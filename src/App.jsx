@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState,useCallback } from 'react';
 
 import Places from './components/Places.jsx';
 import { AVAILABLE_PLACES } from './data.js';
@@ -13,8 +13,7 @@ const storedPlaces = storedIds
   .filter(Boolean);
 
 function App() {
-
-  const modal = useRef();
+  const[isModalOpen,setIsModalOpen]=useState(false);
   const selectedPlace = useRef();
   const [availablePlaces, setAvailablePlaces] = useState([]);
   const [pickedPlaces, setPickedPlaces] = useState(storedPlaces);
@@ -31,12 +30,12 @@ function App() {
   }, [AVAILABLE_PLACES]); // Fix infinite loop issue
 
   function handleStartRemovePlace(id) {
-    modal.current.open();
+    setIsModalOpen(true);
     selectedPlace.current = id;
   }
 
   function handleStopRemovePlace() {
-    modal.current.close();
+    setIsModalOpen(false);
   }
 
   function handleSelectPlace(id) {
@@ -54,24 +53,24 @@ function App() {
     }
   }
 
-  function handleRemovePlace() {
+  const handleRemovePlace= useCallback(function handleRemovePlace() {
     setPickedPlaces((prevPickedPlaces) =>
       prevPickedPlaces.filter((place) => place.id !== selectedPlace.current)
     );
-    modal.current.close();
+    setIsModalOpen(false);
 
     const storedIds = JSON.parse(localStorage.getItem('selectedPlaces')) || [];
     const updatedIds = storedIds.filter((id) => id !== selectedPlace.current);
     localStorage.setItem('selectedPlaces', JSON.stringify(updatedIds));
-  }
+  },[]);
 
   return (
     <>
-      <Modal ref={modal}>
+      <Modal open={isModalOpen} onClose={handleStopRemovePlace}>
         <DeleteConfirmation
           onCancel={handleStopRemovePlace}
           onConfirm={handleRemovePlace}
-        />
+        /> 
       </Modal>
 
       <header>
